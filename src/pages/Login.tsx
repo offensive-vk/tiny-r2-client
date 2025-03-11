@@ -55,7 +55,7 @@ export default function Login() {
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
 
-      <h1 className="text-2xl mb-6 text-black dark:text-white">Cloudflare R2</h1>
+      <h1 className="text-2xl mb-6 text-black dark:text-white">Cloudflare R2 Client</h1>
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-md">
           {error}
