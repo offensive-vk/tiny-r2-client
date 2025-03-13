@@ -73,8 +73,6 @@ pnpm run build
 
 Feel free to contribute & enhance this project! 🌍✨
 
----
-
 ## About the Template
 
 React + TypeScript + Vite
