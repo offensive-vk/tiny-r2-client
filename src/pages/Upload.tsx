@@ -69,12 +69,6 @@ export default function Upload() {
         >
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
-        <button 
-          className="p-2 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded"
-          onClick={logout}
-        >
-          Logout
-        </button>
       </div>
       
       <h1 className="text-2xl mb-4 text-black dark:text-white">Upload Anything</h1>
@@ -109,7 +103,13 @@ export default function Upload() {
       >
         {isUploading ? 'Uploading...' : 'Upload'}
       </button>
-
+      <br />
+      <button 
+          className="p-2 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded"
+          onClick={logout}
+        >
+          Logout
+        </button>
       {isUploading && (
         <div className="w-full max-w-md mt-4">
           <div className="flex justify-between mb-2">
