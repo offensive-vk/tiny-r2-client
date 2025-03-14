@@ -6,6 +6,19 @@ import {
 } from "@aws-sdk/client-s3";
 import md5 from "md5";
 
+// Add debug logger
+const debug = {
+    auth: (message: string, data?: any) => {
+        console.log(`🔐 Auth: ${message}`, data || '');
+    },
+    storage: (message: string, data?: any) => {
+        console.log(`💾 Storage: ${message}`, data || '');
+    },
+    error: (message: string, error?: any) => {
+        console.error(`❌ Error: ${message}`, error || '');
+    }
+};
+
 // Types
 export interface CloudflareAuth {
     cloudflareAccountId: string;
@@ -86,12 +99,26 @@ class FileUploadHandler {
 
     async upload() {
         try {
+            debug.auth('Starting file upload process');
             const { fileBuffer, fileDigest } = await this.prepareFileData();
+            debug.auth('File prepared for upload', {
+                fileName: this.file.name,
+                fileSize: this.file.size,
+                fileType: this.file.type || DEFAULT_CONTENT_TYPE
+            });
+
             const command = this.createUploadCommand(fileBuffer, fileDigest);
             const result = await this.s3Client.send(command);
+            
+            debug.auth('Upload completed successfully', {
+                fileName: this.file.name,
+                eTag: result.ETag
+            });
+            
             this.updateProgress(100);
             return result;
         } catch (error) {
+            debug.error('Upload process failed', error);
             this.updateProgress(0);
             throw this.handleError(error);
         }
@@ -100,10 +127,12 @@ class FileUploadHandler {
     private updateProgress(progress: number) {
         if (this.onProgress) {
             this.onProgress(progress);
+            debug.auth(`Upload progress: ${progress}%`);
         }
     }
 
     private handleError(error: unknown): Error {
+        debug.error('Error in upload handler', error);
         if (error instanceof Error) {
             return new Error(`Upload failed: ${error.message}`);
         }
@@ -115,6 +144,8 @@ class FileUploadHandler {
 class AuthenticationService {
     static async getAuth(apiKey: string): Promise<CloudflareAuth> {
         try {
+            debug.auth('Attempting authentication...');
+            
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
@@ -124,16 +155,32 @@ class AuthenticationService {
             });
             
             if (!response.ok) {
+                debug.error('Authentication failed', response.statusText);
                 throw new Error(`Authentication failed: ${response.statusText}`);
             }
             
-            return await response.json();
+            const authData = await response.json();
+            debug.auth('Authentication successful', {
+                accountId: authData.cloudflareAccountId,
+                bucket: authData.cloudflareR2BucketName
+            });
+
+            // Store auth data in localStorage
+            try {
+                localStorage.setItem('cloudflareAuth', JSON.stringify(authData));
+                debug.storage('Auth data saved to localStorage');
+            } catch (storageError) {
+                debug.error('Failed to save auth data to localStorage', storageError);
+            }
+            
+            return authData;
         } catch (error) {
             throw this.handleAuthError(error);
         }
     }
 
     private static handleAuthError(error: unknown): Error {
+        debug.error('Authentication error occurred', error);
         if (error instanceof Error) {
             return new Error(`Authentication failed: ${error.message}`);
         }
@@ -143,6 +190,7 @@ class AuthenticationService {
 
 // Public API
 export async function getAuth(apiKey: string): Promise<CloudflareAuth> {
+    debug.auth('Initiating auth request');
     return AuthenticationService.getAuth(apiKey);
 }
 
@@ -151,6 +199,12 @@ export async function uploadFile(
     auth: CloudflareAuth, 
     onProgress?: (progress: number) => void
 ) {
+    debug.auth('Initiating file upload', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type || DEFAULT_CONTENT_TYPE
+    });
+    
     const uploader = new FileUploadHandler(file, auth, { onProgress });
     return uploader.upload();
 }
