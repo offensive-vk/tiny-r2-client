@@ -4,19 +4,22 @@
   "version": "0.0.0",
   "type": "module",
   "author": {
-    "name": "vedansh"
+    "name": "vedansh",
+    "email": "offensive-vk@github.com"
   },
   "scripts": {
     "dev": "vite -d --port 10443 --clearScreen",
     "build": "tsc -b && vite build --sourcemap --clearScreen --debug",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview -d",
     "format": "pnpx prettier --write .",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
     "@tailwindcss/vite": "^4.0.11",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "framer-motion": "^12.4.10",

@@ -76,7 +76,7 @@ export default function Login() {
         <input
           id="accessKeyId"
           name="accessKeyId"
-          type="password"
+          type="text"
           value={formData.accessKeyId}
           onChange={handleInputChange}
           className="border border-black dark:border-white p-2 rounded bg-white dark:bg-black text-black dark:text-white"

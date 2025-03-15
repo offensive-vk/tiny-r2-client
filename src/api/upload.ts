@@ -4,20 +4,10 @@ import {
     type PutObjectCommandInput,
     type S3ClientConfig
 } from "@aws-sdk/client-s3";
-import md5 from "md5";
 
-// Add debug logger
-const debug = {
-    auth: (message: string, data?: any) => {
-        console.log(`🔐 Auth: ${message}`, data || '');
-    },
-    storage: (message: string, data?: any) => {
-        console.log(`💾 Storage: ${message}`, data || '');
-    },
-    error: (message: string, error?: any) => {
-        console.error(`❌ Error: ${message}`, error || '');
-    }
-};
+import md5 from "md5";
+import chalk from "chalk";
+import { logger } from "../utils/logger";
 
 // Types
 export interface CloudflareAuth {
@@ -32,7 +22,7 @@ interface UploadProgress {
 }
 
 // Constants
-const API_URL = "/api/auth";
+const API_URL = "/api/upload";
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
 // S3 Client Factory
@@ -86,6 +76,7 @@ class FileUploadHandler {
             (next) => async (args) => {
                 const typedArgs = args as { request: { headers: Record<string, string> } };
                 typedArgs.request.headers["if-none-match"] = `"${fileDigest}"`;
+                logger.debug('Added ETag to request', { etag: fileDigest });
                 return await next(args);
             },
             {
@@ -99,9 +90,9 @@ class FileUploadHandler {
 
     async upload() {
         try {
-            debug.auth('Starting file upload process');
+            logger.auth('Starting file upload process');
             const { fileBuffer, fileDigest } = await this.prepareFileData();
-            debug.auth('File prepared for upload', {
+            logger.auth('File prepared for upload', {
                 fileName: this.file.name,
                 fileSize: this.file.size,
                 fileType: this.file.type || DEFAULT_CONTENT_TYPE
@@ -110,7 +101,7 @@ class FileUploadHandler {
             const command = this.createUploadCommand(fileBuffer, fileDigest);
             const result = await this.s3Client.send(command);
             
-            debug.auth('Upload completed successfully', {
+            logger.auth('Upload completed successfully', {
                 fileName: this.file.name,
                 eTag: result.ETag
             });
@@ -118,7 +109,7 @@ class FileUploadHandler {
             this.updateProgress(100);
             return result;
         } catch (error) {
-            debug.error('Upload process failed', error);
+            logger.error('Upload process failed', error);
             this.updateProgress(0);
             throw this.handleError(error);
         }
@@ -127,12 +118,12 @@ class FileUploadHandler {
     private updateProgress(progress: number) {
         if (this.onProgress) {
             this.onProgress(progress);
-            debug.auth(`Upload progress: ${progress}%`);
+            logger.auth(`Upload progress: ${progress}%`);
         }
     }
 
     private handleError(error: unknown): Error {
-        debug.error('Error in upload handler', error);
+        logger.error('Error in upload handler', error);
         if (error instanceof Error) {
             return new Error(`Upload failed: ${error.message}`);
         }
@@ -144,7 +135,7 @@ class FileUploadHandler {
 class AuthenticationService {
     static async getAuth(apiKey: string): Promise<CloudflareAuth> {
         try {
-            debug.auth('Attempting authentication...');
+            logger.auth('Attempting authentication...');
             
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -155,12 +146,12 @@ class AuthenticationService {
             });
             
             if (!response.ok) {
-                debug.error('Authentication failed', response.statusText);
+                logger.error('Authentication failed', response.statusText);
                 throw new Error(`Authentication failed: ${response.statusText}`);
             }
             
             const authData = await response.json();
-            debug.auth('Authentication successful', {
+            logger.auth('Authentication successful', {
                 accountId: authData.cloudflareAccountId,
                 bucket: authData.cloudflareR2BucketName
             });
@@ -168,9 +159,9 @@ class AuthenticationService {
             // Store auth data in localStorage
             try {
                 localStorage.setItem('cloudflareAuth', JSON.stringify(authData));
-                debug.storage('Auth data saved to localStorage');
+                logger.debug('Auth data saved to localStorage');
             } catch (storageError) {
-                debug.error('Failed to save auth data to localStorage', storageError);
+                logger.warn('Failed to save auth data to localStorage', storageError);
             }
             
             return authData;
@@ -180,7 +171,7 @@ class AuthenticationService {
     }
 
     private static handleAuthError(error: unknown): Error {
-        debug.error('Authentication error occurred', error);
+        logger.error('Authentication error occurred', error);
         if (error instanceof Error) {
             return new Error(`Authentication failed: ${error.message}`);
         }
@@ -190,7 +181,7 @@ class AuthenticationService {
 
 // Public API
 export async function getAuth(apiKey: string): Promise<CloudflareAuth> {
-    debug.auth('Initiating auth request');
+    logger.auth('Initiating auth request');
     return AuthenticationService.getAuth(apiKey);
 }
 
@@ -199,10 +190,9 @@ export async function uploadFile(
     auth: CloudflareAuth, 
     onProgress?: (progress: number) => void
 ) {
-    debug.auth('Initiating file upload', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type || DEFAULT_CONTENT_TYPE
+    logger.upload('Starting upload for: ' + chalk.bold(file.name), {
+        size: '$' + ((file.size / (1024 * 1024)).toFixed(2)) + ' MB',
+        type: file.type
     });
     
     const uploader = new FileUploadHandler(file, auth, { onProgress });

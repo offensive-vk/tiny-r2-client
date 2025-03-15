@@ -74,7 +74,7 @@ export default function Upload() {
       <h1 className="text-2xl mb-4 text-black dark:text-white">Upload Anything</h1>
       
       <div 
-        className={`w-full max-w-md p-8 border-2 border-dashed rounded-lg ${
+        className={`w-full max-w-md p-8 border-2 rounded-lg ${
           isDragging ? 'border-green-500 bg-green-50 dark:bg-green-900' : 'border-gray-300'
         } flex flex-col items-center justify-center`}
         onDrop={handleDrop}
