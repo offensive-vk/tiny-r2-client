@@ -2,9 +2,9 @@ export default function Hero() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-white dark:bg-black">
             <h2 className="text-2xl mb-6 text-black dark:text-white animate-fade-in-up">
-                <span className="inline-block animate-wave">👋</span>
-                <span className="inline-block animate-slide-in">Hello</span>
-                <span className="inline-block animate-slide-in [animation-delay:200ms]"> Everyone!</span>
+                <span className="inline-block animate-wave">👋 &nbsp;</span>
+                <span className="inline-block animate-slide-in">Welcome &nbsp;</span>
+                <span className="inline-block animate-slide-in [animation-delay:200ms]">Everyone!</span>
             </h2>
 
             <div className="flex gap-4">
