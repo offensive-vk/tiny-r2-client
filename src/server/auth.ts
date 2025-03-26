@@ -16,7 +16,7 @@ if (!VITE_ACCOUNT_ID || !VITE_R2_ACCESS_KEY_ID || !VITE_R2_SECRET_ACCESS_KEY || 
     throw new Error("Missing Cloudflare R2 environment variables.");
 }
 
-router.get("/auth", (_req: express.Request, res: express.Response) => {
+router.post("/auth", (_req: express.Request, res: express.Response) => {
     res.json({
         cloudflareAccountId: VITE_ACCOUNT_ID,
         cloudflareR2AccessKeyId: VITE_R2_ACCESS_KEY_ID,

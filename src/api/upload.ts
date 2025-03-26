@@ -22,7 +22,7 @@ interface UploadProgress {
 }
 
 // Constants
-const API_URL = "/api/upload";
+const API_URL = "/auth";
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
 // S3 Client Factory
@@ -55,9 +55,18 @@ class FileUploadHandler {
     }
 
     private async prepareFileData() {
-        const fileBuffer = await this.file.arrayBuffer();
-        const fileDigest = md5(Buffer.from(fileBuffer));
-        return { fileBuffer, fileDigest };
+        return new Promise<{ fileBuffer: ArrayBuffer, fileDigest: string }>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const fileBuffer = reader.result as ArrayBuffer;
+                const fileDigest = md5(new Uint8Array(fileBuffer));
+                resolve({ fileBuffer, fileDigest });
+            };
+            reader.onerror = () => {
+                reject(new Error('Failed to read file'));
+            };
+            reader.readAsArrayBuffer(this.file);
+        });
     }
 
     private createUploadCommand(fileBuffer: ArrayBuffer, fileDigest: string) {
@@ -142,7 +151,8 @@ class AuthenticationService {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${apiKey}`
-                }
+                },
+                mode: 'cors'
             });
             
             if (!response.ok) {

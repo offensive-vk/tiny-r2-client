@@ -8,7 +8,7 @@
     "email": "offensive-vk@github.com"
   },
   "scripts": {
-    "dev": "vite -d --port 10443 --clearScreen",
+    "dev": "vite -d --port 10443 --clearScreen --cors -v",
     "build": "tsc -b && vite build --sourcemap --clearScreen --debug",
     "lint": "eslint .",
     "preview": "vite preview -d",
