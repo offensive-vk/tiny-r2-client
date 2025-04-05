@@ -20,7 +20,6 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Validate inputs
       if (Object.values(formData).some(value => !value.trim())) {
         throw new Error("All fields are required");
       }
@@ -93,6 +92,7 @@ export default function Login() {
           className="border border-black dark:border-white p-2 rounded bg-white dark:bg-black text-black dark:text-white"
           placeholder="R2 Secret Access Key"
           required
+          autoComplete=""
         />
 
         <input
