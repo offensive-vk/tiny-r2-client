@@ -1,7 +1,10 @@
+// src/pages/Upload.tsx
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useCallback } from "react";
 import { uploadFile } from "../api/upload";
+import FileDropZone from "../components/FileDropZone";
+import UploadProgress from "../components/UploadProgress";
 
 export default function Upload() {
   const { auth, logout } = useAuth();
@@ -30,13 +33,6 @@ export default function Upload() {
       } finally {
         setIsUploading(false);
       }
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      setFile(files[0]);
     }
   };
 
@@ -73,28 +69,13 @@ export default function Upload() {
       
       <h1 className="text-2xl mb-4 text-black dark:text-white">Upload Anything</h1>
       
-      <div 
-        className={`w-full max-w-md p-8 border-2 rounded-lg ${
-          isDragging ? 'border-green-500 bg-green-50 dark:bg-green-900' : 'border-gray-300'
-        } flex flex-col items-center justify-center`}
+      <FileDropZone 
+        onFileChange={setFile}
+        isDragging={isDragging}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-      >
-        <p className="text-center mb-4 text-black dark:text-white">
-          Drag and drop your file here or click to select
-        </p>
-        <input 
-          type="file" 
-          onChange={handleFileChange}
-          className="text-black dark:text-white bg-white dark:bg-black border border-black dark:border-white rounded p-2" 
-        />
-        {file && (
-          <p className="mt-2 text-sm text-black dark:text-white">
-            Selected: {file.name}
-          </p>
-        )}
-      </div>
+      />
 
       <button 
         className="mt-4 p-2 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded"
@@ -110,20 +91,12 @@ export default function Upload() {
         >
           Logout
         </button>
-      {isUploading && (
-        <div className="w-full max-w-md mt-4">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm text-black dark:text-white">{progress}%</span>
-            <span className="text-sm text-black dark:text-white">{uploadSpeed}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-green-500 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
+
+      <UploadProgress 
+        progress={progress}
+        uploadSpeed={uploadSpeed}
+        isUploading={isUploading}
+      />
     </div>
   );
 }
