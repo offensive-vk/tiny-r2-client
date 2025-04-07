@@ -1,4 +1,3 @@
-// src/pages/Upload.tsx
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useCallback } from "react";
@@ -14,14 +13,16 @@ export default function Upload() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSpeed, setUploadSpeed] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleUpload = async () => {
     if (file && auth) {
       setIsUploading(true);
+      setErrorMessage(null); // Clear previous error messages
       const startTime = Date.now();
       const updateSpeed = (loaded: number) => {
-        const elapsedTime = (Date.now() - startTime) / 1000; // seconds
-        const speed = (loaded / (1024 * 1024)) / elapsedTime; // MB/s
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        const speed = (loaded / (1024 * 1024)) / elapsedTime;
         setUploadSpeed(`${speed.toFixed(2)} MB/s`);
       };
 
@@ -30,9 +31,13 @@ export default function Upload() {
           setProgress(progress);
           updateSpeed(progress);
         });
+      } catch (error: any) {
+        setErrorMessage(error.message || 'Upload failed');
       } finally {
         setIsUploading(false);
       }
+    } else {
+      setErrorMessage('No file selected or not authenticated.');
     }
   };
 
@@ -77,20 +82,31 @@ export default function Upload() {
         onDragLeave={handleDragLeave}
       />
 
-      <button 
-        className="mt-4 p-2 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded"
-        onClick={handleUpload}
-        disabled={!file || isUploading}
-      >
-        {isUploading ? 'Uploading...' : 'Upload'}
-      </button>
-      <br />
-      <button 
-          className="p-2 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded"
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        After selecting a file, click the 'Upload' button to start the upload.
+      </p>
+      
+      {errorMessage && (
+        <div className="text-red-500 mt-4">
+          Error: {errorMessage}
+        </div>
+      )}
+      
+      <div className="flex gap-4 mt-4">
+        <button 
+          className="p-2 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded transition duration-300 ease-in-out transform hover:scale-105"
+          onClick={handleUpload}
+          disabled={!file || isUploading}
+        >
+          {isUploading ? 'Uploading...' : 'Upload'}
+        </button>
+        <button 
+          className="p-2 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded transition duration-300 ease-in-out transform hover:scale-105"
           onClick={logout}
         >
           Logout
         </button>
+      </div>
 
       <UploadProgress 
         progress={progress}

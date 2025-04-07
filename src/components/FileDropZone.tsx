@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface FileDropZoneProps {
-    onFileChange: (file: File) => void;
+    onFileChange: (file: File | null) => void;
     isDragging: boolean;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
@@ -9,26 +9,51 @@ interface FileDropZoneProps {
 }
 
 const FileDropZone: React.FC<FileDropZoneProps> = ({ onFileChange, isDragging, onDrop, onDragOver, onDragLeave }) => {
+    const [fileName, setFileName] = React.useState<string | null>(null);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const selectedFile = files[0];
+            onFileChange(selectedFile);
+            setFileName(selectedFile.name);
+        }
+    };
+
+    const handleDropInternal = (e: React.DragEvent) => {
+        onDrop(e);
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const selectedFile = files[0];
+            onFileChange(selectedFile);
+            setFileName(selectedFile.name);
+        }
+    };
+
     return (
         <div
-            className={`w-full max-w-md p-8 border-2 rounded-lg ${isDragging ? 'border-green-500 bg-green-50 dark:bg-green-900' : 'border-gray-300'}`}
-            onDrop={onDrop}
+            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${
+                isDragging ? 'border-blue-500 bg-blue-50 dark:border-blue-700 dark:bg-blue-900' : 'border-gray-300 dark:border-gray-700'
+            }`}
+            onDrop={handleDropInternal}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
         >
-            <p className="text-center mb-4 text-black dark:text-white">
-                Drag and drop your file here or click to select
-            </p>
             <input
                 type="file"
-                onChange={(e) => {
-                    const files = e.target.files;
-                    if (files && files.length > 0) {
-                        onFileChange(files[0]);
-                    }
-                }}
-                className="text-black dark:text-white bg-white dark:bg-black border border-black dark:border-white rounded p-2"
+                className="hidden"
+                id="file-upload"
+                onChange={handleFileSelect}
             />
+            <label htmlFor="file-upload" className="cursor-pointer">
+                {fileName ? (
+                    <p className="text-gray-700 dark:text-gray-300">Selected file: {fileName}</p>
+                ) : (
+                    <p className="text-gray-700 dark:text-gray-300">
+                        Drag and drop a file here, or click to select a file.
+                    </p>
+                )}
+            </label>
         </div>
     );
 };
